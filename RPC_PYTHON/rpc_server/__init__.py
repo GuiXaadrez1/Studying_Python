@@ -1,1 +1,1 @@
-from RPC_PYTHON.rpc_server.RpcServer import RpcServer
+from rpc_server.RpcServer import RpcServer

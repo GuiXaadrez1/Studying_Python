@@ -7,9 +7,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 class RpcServer():
     
-    def __init__(self, ip_server: str, port_server: int):
+    def __init__(self, ip_server:str = "127.0.0.1", port_server: int = 8080):
         self.__ip = ip_server  # Encapsulamento privado
         self.__port = port_server  # Encapsulamento privado
+        self.start_server()  # Inicia o servidor automaticamente
 
     def start_server(self):
         server = SimpleXMLRPCServer((self.__ip, self.__port))  # Criando o servidor RPC
@@ -55,20 +56,17 @@ class RpcServer():
             raise ValueError("A porta deve ser um número inteiro entre 1 e 65535!")    
 
 if __name__ == "__main__":
-    ip = "127.0.0.1"
-    port = 8080
-
-    rpc_server = RpcServer(ip, port)
+    
+    rpc_server = RpcServer()
     print(f"IP configurado: {rpc_server.get_ip()}")  # Brincando com o getter
     print(f"Porta configurada: {rpc_server.get_port()}") 
-
-    rpc_server.set_ip("localhost")  # Brincando com o setter
-    rpc_server.set_port(6025)
     
-    print(f"IP configurado: {rpc_server.get_ip()}")  # Brincando com o getter
-    print(f"Porta configurada: {rpc_server.get_port()}")
+    #rpc_server.set_ip("localhost")  # Brincando com o setter
+    #rpc_server.set_port(6025)
+    
+    #print(f"IP configurado: {rpc_server.get_ip()}")  # Brincando com o getter
+    #print(f"Porta configurada: {rpc_server.get_port()}")
     
     # brincando com o método somar que é publico
-    print(f'O resultado da soma é: {rpc_server.somar(10,20)}')
+    #print(f'O resultado da soma é: {rpc_server.somar(10,20)}')
     
-    rpc_server.start_server()  # Inicia o servidor
