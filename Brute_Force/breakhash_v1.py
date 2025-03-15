@@ -20,12 +20,13 @@ def break_hash(hash_original):
     lista = list(string)  
     random.shuffle(lista)  
     resultado = ''.join(lista)
-    resultado = resultado[:10] 
+    resultado = resultado[:6]
     hash_gerado = gerar_md5(resultado)    
-    return hash_gerado 
+    return f'Hash gerado:{hash_gerado} da string: {resultado}' 
 
 
-hash = "16c4f8b1d3e9bdb752f82b80a834fc9e"
+#hash = "16c4f8b1d3e9bdb752f82b80a834fc9e"
+hash = "9135d8523ad3da99d8a4eb83afac13d1"
 
 # Loop de tentativa até encontrar o hash correto
 while True:
@@ -37,7 +38,7 @@ while True:
     real_time = time_f - time_i  # Calcula o tempo gasto
 
     if hash_break == hash:
-        print(f"Achou a hash:{hash_break}")
+        print(f"Achou:{hash_break}")
         print(f"Você demorou {real_time:.4f} segundos")  # Exibe o tempo de execução
         
         break  # Interrompe o loop após encontrar a correspondência
