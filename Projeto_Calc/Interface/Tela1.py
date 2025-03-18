@@ -1,7 +1,8 @@
 from tkinter import Tk
 from tkinter import ttk
 import awesometkinter as atk  # vai ser necessário renomear os frames que tem a class Frame
-
+import os 
+import sys
 
 
 class Tela_Calc:
@@ -16,7 +17,8 @@ class Tela_Calc:
         self.janela_calc.geometry('300x400')
         self.janela_calc.title("Amor Calc")
         self.janela_calc.resizable(False, False)
-        self.janela_calc.configure(background='#DA70D6')
+        self.janela_calc.iconbitmap(os.path.join(os.getcwd(),"Projeto_Calc","Interface","coracao.ico"))
+        self.janela_calc.configure(background='#E63946')
         self.frames()
         self.widgets_frame2()
 
@@ -31,27 +33,29 @@ class Tela_Calc:
         
     def widgets_frame2(self):
         bt1 = ttk.Button(self.frame2,text='C')
-        bt1.place(relx=0.04, rely=0.02, relwidth=0.2, relheight=0.2)
+        bt1.place(relx=0.02, rely=0.02, relwidth=0.2, relheight=0.2)
         bt2 = ttk.Button(self.frame2,text='CE')
-        bt2.place(relx=0.25, rely=0.02, relwidth=0.2, relheight=0.2)
+        bt2.place(relx=0.23, rely=0.02, relwidth=0.2, relheight=0.2)
         bt3 = ttk.Button(self.frame2,text='⌫')
         bt3.place(relx=0.77, rely=0.02, relwidth=0.2, relheight=0.2)
         bt4 = ttk.Button(self.frame2,text='/')
         bt4.place(relx=0.77, rely=0.22, relwidth=0.2, relheight=0.2)
-        bt5 = ttk.Button(self.frame2,text='*')
-        bt5.place(relx=0.55, rely=0.22, relwidth=0.2, relheight=0.2)
+        bt5 = ttk.Button(self.frame2,text='x')
+        bt5.place(relx=0.56, rely=0.22, relwidth=0.2, relheight=0.2)
         bt6 = ttk.Button(self.frame2,text='+')              
         bt6.place(relx=0.77, rely=0.42, relwidth=0.2, relheight=0.39)
         bt7 = ttk.Button(self.frame2,text='-')              
-        bt7.place(relx=0.55, rely=0.42, relwidth=0.2, relheight=0.2)
-        bt8 = ttk.Button(self.frame2,text='=')              
-        bt8.place(relx=0.55, rely=0.62, relwidth=0.2, relheight=0.2)
+        bt7.place(relx=0.56, rely=0.42, relwidth=0.2, relheight=0.2)
+        bt8 = ttk.Button(self.frame2,text='\U00002764')              
+        bt8.place(relx=0.56, rely=0.62, relwidth=0.2, relheight=0.2)
         bt9 = ttk.Button(self.frame2,text=',')              
-        bt9.place(relx=0.55, rely=0.82, relwidth=0.2, relheight=0.15)
-        bt10 = ttk.Button(self.frame2,text="\U00002764")              
-        bt10.place(relx=0.55, rely=0.02, relwidth=0.2, relheight=0.2)  
-        bt11 = ttk.Button(self.frame2,text="\U00002764")              
-        bt11.place(relx=0.77, rely=0.82, relwidth=0.2, relheight=0.15)  
+        bt9.place(relx=0.56, rely=0.82, relwidth=0.2, relheight=0.15)
+        bt10 = ttk.Button(self.frame2,text="%")              
+        bt10.place(relx=0.56, rely=0.02, relwidth=0.2, relheight=0.2)  
+        bt11 = ttk.Button(self.frame2,text="=")              
+        bt11.place(relx=0.77, rely=0.82, relwidth=0.2, relheight=0.15)
+        bt12 = ttk.Button(self.frame2,text='\U00002764')              
+        bt12.place(relx=0.43, rely=0.02, relwidth=0.13, relheight=0.2)
         
         
          
