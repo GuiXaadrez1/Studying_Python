@@ -19,7 +19,7 @@ class RpcServer:
         server.register_instance(self)  # Registra os métodos da classe como métodos RPC
         server.serve_forever()  # Mantém o servidor rodando indefinidamente
     
-    # Métodos de cálculo (soma, subtração, multiplicação, divisão)
+    # Métodos de cálculo
     def somar(self, a, b):
         return a + b
 
@@ -34,7 +34,11 @@ class RpcServer:
             return "Erro: Divisão por zero!"
         return a / b
     
+    def porcentagem(self, a, b):
+        return (a/100) * b
+        
     def potenciacao(self, a, b):
+        
         return a ** b
     
     def radicacao(self, a):
@@ -46,11 +50,11 @@ class RpcServer:
         try:
             while t1 <= n:  # Agora o loop percorre toda a sequência
                 if t1 == n:
-                    print(f"{n} pertence à sequência de Fibonacci.")
+                    print(f"\n{n} pertence à sequência de Fibonacci.")
                     return True 
                 t1, t2 = t2, t1 + t2  # Atualiza os termos de Fibonacci
             
-            print(f"{n} NÃO pertence à sequência de Fibonacci.")
+            print(f"\n{n} NÃO pertence à sequência de Fibonacci.")
             return False
 
         except Exception as e:
