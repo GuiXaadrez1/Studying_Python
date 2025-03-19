@@ -1,15 +1,16 @@
 from xmlrpc.server import SimpleXMLRPCServer
-import os 
+import os
 import sys
+import math
 
-# configurando o ambiente
+# Configurando o ambiente
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-class RpcServer():
+class RpcServer:
     
-    def __init__(self, ip_server:str = "127.0.0.1", port_server: int = 8080):
+    def __init__(self, ip_server: str = "127.0.0.1", port_server: int = 8080):
         self.__ip = ip_server  # Encapsulamento privado
-        self.__port = port_server  # Encapsulamento privado
+        self.__port = port_server 
         self.start_server()  # Inicia o servidor automaticamente
 
     def start_server(self):
@@ -33,6 +34,29 @@ class RpcServer():
             return "Erro: Divisão por zero!"
         return a / b
     
+    def potenciacao(self, a, b):
+        return a ** b
+    
+    def radicacao(self, a):
+        return math.sqrt(a)  # Raiz quadrada de 'a'
+    
+    def fibonacci(self, n):
+        t1, t2 = 0, 1  # Os primeiros termos da sequência de Fibonacci
+
+        try:
+            while t1 <= n:  # Agora o loop percorre toda a sequência
+                if t1 == n:
+                    print(f"{n} pertence à sequência de Fibonacci.")
+                    return True 
+                t1, t2 = t2, t1 + t2  # Atualiza os termos de Fibonacci
+            
+            print(f"{n} NÃO pertence à sequência de Fibonacci.")
+            return False
+
+        except Exception as e:
+            print(f"Tente novamente, ocorreu o erro: {e}")
+            return False  
+
     # Getter para o IP
     def get_ip(self):    
         return self.__ip
@@ -58,15 +82,7 @@ class RpcServer():
 if __name__ == "__main__":
     
     rpc_server = RpcServer()
-    print(f"IP configurado: {rpc_server.get_ip()}")  # Brincando com o getter
+    print(f"IP configurado: {rpc_server.get_ip()}")  # Testando getter
     print(f"Porta configurada: {rpc_server.get_port()}") 
-    
-    #rpc_server.set_ip("localhost")  # Brincando com o setter
-    #rpc_server.set_port(6025)
-    
-    #print(f"IP configurado: {rpc_server.get_ip()}")  # Brincando com o getter
-    #print(f"Porta configurada: {rpc_server.get_port()}")
-    
-    # brincando com o método somar que é publico
-    #print(f'O resultado da soma é: {rpc_server.somar(10,20)}')
-    
+
+    # print(f'O resultado da soma é: {rpc_server.somar(10, 20)}')  # Teste

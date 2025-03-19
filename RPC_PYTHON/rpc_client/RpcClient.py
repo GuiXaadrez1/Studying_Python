@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'r
 
 # Criação do cliente
 class RpcClient:
-    def __init__(self, server_url: str):  # Corrigido para __init__
+    def __init__(self, server_url: str):  # Construtor corrigido
         self.__proxy = ServerProxy(server_url)  # Cria um proxy XML-RPC para o servidor
     
     # Métodos remotos chamando o servidor
@@ -22,11 +22,20 @@ class RpcClient:
 
     def dividir(self, a, b):
         return self.__proxy.dividir(a, b)
+    
+    def potenciacao(self, a, b):
+        return self.__proxy.potenciacao(a, b)
+    
+    def radicacao(self, a): 
+        return self.__proxy.radicacao(a)
+    
+    def fibonacci(self, n):
+        return self.__proxy.fibonacci(n)
 
     def get_proxy(self):
         return f"Proxy se comunicando com o servidor: {self.__proxy}"  # Retorna o proxy para depuração
 
-if __name__ == "__main__":  # Corrigido para "__main__"
+if __name__ == "__main__":  
     # Criando uma instância do cliente
     proxy = RpcClient('http://127.0.0.1:8080/')
 
@@ -41,20 +50,34 @@ if __name__ == "__main__":  # Corrigido para "__main__"
             print("2 - Subtrair")
             print("3 - Multiplicar")
             print("4 - Dividir")
-            print("5 - Realizar todas as operações")
+            print("5 - Potenciação")
+            print("6 - Radiciação")
+            print("7 - Sequência de Fibonacci")
+            print("8 - Realizar todas as operações")
 
             opcao = int(input("\nDigite o número da operação matemática: "))
 
-            if opcao not in [1, 2, 3, 4, 5]:
-                raise ValueError("Opção inválida! Escolha um número entre 1 e 5.")
+            if opcao not in [1, 2, 3, 4, 5, 6, 7, 8]:
+                raise ValueError("Opção inválida! Escolha um número entre 1 e 8.")
             break  # Sai do loop se a opção for válida
 
         except ValueError as e:
             print(f"Erro: {e}. Tente novamente.\n")
 
-    # Pegando números do usuário
-    num1 = int(input("\nDigite o primeiro número para o cálculo: "))
-    num2 = int(input("Digite o segundo número para o cálculo: "))
+    if opcao == 5:
+        print("\nNa potenciação, o primeiro número é a base e o segundo é o expoente!")
+        num1 = int(input("\nDigite o primeiro número para o cálculo: "))
+        num2 = int(input("Digite o segundo número para o cálculo: "))
+    
+    elif opcao == 6:
+        num1 = int(input("\nDigite apenas o número que deseja obter a raiz quadrada: "))
+    
+    elif opcao == 7:
+        num1 = int(input("\nDigite apenas o número que deseja verificar na sequência de Fibonacci: "))
+    
+    else:
+        num1 = int(input("\nDigite o primeiro número para o cálculo: "))
+        num2 = int(input("Digite o segundo número para o cálculo: "))
 
     # Chamadas ao servidor
     try:
@@ -71,10 +94,27 @@ if __name__ == "__main__":  # Corrigido para "__main__"
             resultado = proxy.dividir(num1, num2)
             print(f'O resultado da divisão é: {resultado}')
         elif opcao == 5:
+            resultado = proxy.potenciacao(num1, num2)
+            print(f'O resultado da potência é: {resultado}')
+        elif opcao == 6:
+            resultado = proxy.radicacao(num1)  # Corrigido para passar apenas um argumento
+            print(f'O resultado da radiciação é: {resultado}')
+        elif opcao == 7:
+            resultado = proxy.fibonacci(num1)
+            if resultado:
+                print(f"\n{num1} pertence à sequência de Fibonacci.")
+            else:
+                print(f"\n{num1} não pertence à sequência de Fibonacci.")
+        elif opcao == 8:
             print(f'O resultado da soma é: {proxy.somar(num1, num2)}')
             print(f'O resultado da subtração é: {proxy.subtrair(num1, num2)}')
             print(f'O resultado da multiplicação é: {proxy.multiplicar(num1, num2)}')
             print(f'O resultado da divisão é: {proxy.dividir(num1, num2)}')
+            print(f'O resultado da potenciação é: {proxy.potenciacao(num1, num2)}')
+            print(f'O resultado da radiciação do primeiro número é: {proxy.radicacao(num1)}')
+            print(f'O resultado da radiciação do segundo número é: {proxy.radicacao(num2)}')
+            print(f'O resultado da sequência de fibonacci do primeiro número é: {proxy.fibonacci(num1)}')
+            print(f'O resultado da sequência de fibonacci do segundo número é: {proxy.fibonacci(num2)}')
 
     except Exception as e:
         print(f"Erro ao se comunicar com o servidor: {e}")
