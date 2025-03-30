@@ -111,7 +111,7 @@ if __name__ == "__main__":
         
         elif opcao == 5:
             resultado = proxy.porcentagem(num1,num2)
-            print(f'O resultado é: {resultado}%')
+            print(f'O resultado da porcentagem é: {resultado}%')
             
         elif opcao == 6:
             resultado = proxy.potenciacao(num1, num2)
@@ -131,7 +131,7 @@ if __name__ == "__main__":
             print(f'O resultado da subtração é: {proxy.subtrair(num1, num2)}')
             print(f'O resultado da multiplicação é: {proxy.multiplicar(num1, num2)}')
             print(f'O resultado da divisão é: {proxy.dividir(num1, num2)}')
-            print(f'O resultado é: {proxy.porcentagem(num1, num2)}%')
+            print(f'O resultado da porcentagem é: {proxy.porcentagem(num1, num2)}%')
             print(f'O resultado da potenciação é: {proxy.potenciacao(num1, num2)}')
             print(f'O resultado da radiciação do primeiro número é: {proxy.radicacao(num1)}')
             print(f'O resultado da radiciação do segundo número é: {proxy.radicacao(num2)}')
