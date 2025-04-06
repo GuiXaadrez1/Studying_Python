@@ -1,0 +1,36 @@
+1 - Preparando o ambiente MPI
+    
+    Acesse https://www.microsoft.com/en-us/download/details.aspx?id=100593
+    Clique em Download.
+
+    Você verá essas opções:
+
+        msmpisetup.exe — runtime
+
+        msmpisdk.msi — SDK (desenvolvimento)
+
+    Baixe os dois e instale nessa ordem:
+
+        Primeiro: msmpisetup.exe
+
+        Depois: msmpisdk.msi
+
+2 - Identificando a versão do MPI:
+    
+    Coloque para rodar no console -> mpiexec --version
+
+3 - No console, vamos navegar até onde o script python está
+neste diretório vamos colocar esse comando:
+
+    mpiexec -n 4 python seu_script.py
+
+4 - O que esse comando faz?
+
+    mpiexec	-> Ferramenta do MPI para iniciar programas paralelos. Ela "comanda" a 
+    criação dos processos MPI.
+    
+    -n 4 ->	Cria 4 processos MPI (ranks). Cada um vai executar uma cópia independente do
+    seu programa. podemos aumentar ou diminuir a quantidade de raks(processos)
+    
+    python seu_script.py ->	O programa a ser rodado é seu código Python, que dentro dele
+    provavelmente usa mpi4py para comunicação entre os processos.
