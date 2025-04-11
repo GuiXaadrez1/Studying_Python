@@ -1,68 +1,62 @@
-from mpi4py import MPI 
+from mpi4py import MPI
 import os
+import time
 
-def read_txt(nome: str):
-    with open(nome, 'r') as f:
-        linhas = f.readlines()
-    numeros = [int(l.strip()) for l in linhas]
-    return numeros
-
-def dist_sum(comm, reader):
+def somador(comm, caminho):
     rank = comm.Get_rank()
     size = comm.Get_size()
-
+    
+    num_workers = size - 1  # Excluindo o coordenador (rank 0)
+    
+    start_time = time.time()
     if rank == 0:
-        numeros = reader
-        num_workers = size - 1
+        # Coordenador: ler o arquivo linha a linha e distribuir
+        with open(caminho, 'r') as f:
+            worker_rank = 1
+            for linha in f:
+                numero = int(linha.strip())
+                comm.send(numero, dest=worker_rank)
+                worker_rank += 1
+                if worker_rank > num_workers:
+                    worker_rank = 1
+        
+        # Enviar sinal de término para os workers
+        for worker_rank in range(1, size):
+            comm.send(None, dest=worker_rank)
 
-        while len(numeros) > 1:
-            workers_in_use = min(num_workers, len(numeros)//2)
-
-            for worker_id in range(1, workers_in_use + 1):
-                n1 = numeros.pop(0)
-                n2 = numeros.pop(0)
-                comm.send((n1, n2), dest=worker_id, tag=11)
-            
-            for worker_id in range(1, workers_in_use + 1):
-                soma = comm.recv(source=worker_id, tag=22)
-                numeros.append(soma)
-
-        for worker_id in range(1, size):
-            comm.send(None, dest=worker_id, tag=99)
-
-        print(f"Resultado final da soma: {numeros[0]}")
+        # Receber as somas parciais
+        soma_total = 0
+        for worker_rank in range(1, size):
+            soma_parcial = comm.recv(source=worker_rank)
+            print(f"Recebido soma {soma_parcial} do trabalhador {worker_rank}")
+            soma_total += soma_parcial
+        
+        end_time = time.time()
+        real_time = end_time - start_time
+        
+        print(f"\nSoma total final: {soma_total}")
+        print(f"Tempo de execução: {real_time:.4f} segundos")
 
     else:
+        # Cada trabalhador recebe números e calcula a soma incremental
+        soma_local = 0
         while True:
-            status = MPI.Status()
-            dados = comm.recv(source=0, tag=MPI.ANY_TAG, status=status)
-            if status.Get_tag() == 99:
+            numero = comm.recv(source=0)
+            if numero is None:
                 break
-
-            n1, n2 = dados
-            resultado = n1 + n2
-            comm.send(resultado, dest=0, tag=22)
-
+            soma_local += numero
+        print(f"Rank {rank} somou {soma_local}")
+        comm.send(soma_local, dest=0)
 
 def main():
     comm = MPI.COMM_WORLD
-    total_process = comm.Get_size()
     rank = comm.Get_rank()
 
-    if total_process < 4 and rank == 0:
-        print("Poucos processos! Recomendo usar pelo menos 4.")
-    
     if rank == 0:
-        caminho = os.path.join(os.getcwd(), 'somarnum.txt')
-        
-        reader = read_txt(caminho)
+        caminho = os.path.join(os.getcwd(), 'saida2.txt')
+        somador(comm, caminho)
     else:
-        reader = None
-    
-    dist_sum(comm, reader)
-
-    return f'Existem {total_process} ranks no comunicador, este é o rank de id(processo): {rank}'
+        somador(comm, None)
 
 if __name__ == "__main__":
-    test = main()
-    print(test)
+    main()
