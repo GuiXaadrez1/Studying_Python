@@ -3,8 +3,8 @@ import os
 import time
 
 def somador(comm, caminho):
-    rank = comm.Get_rank()
-    size = comm.Get_size()
+    rank = comm.Get_rank() # pegando o id_dos_processos/rank
+    size = comm.Get_size() # pegando o tamanho/quantidade de processos no comunicador = wokers + master
     
     num_workers = size - 1  # Excluindo o coordenador (rank 0)
     
@@ -13,12 +13,15 @@ def somador(comm, caminho):
         # Coordenador: ler o arquivo linha a linha e distribuir
         with open(caminho, 'r') as f:
             worker_rank = 1
+            #print(type(f))
             for linha in f:
-                numero = int(linha.strip())
-                comm.send(numero, dest=worker_rank)
-                worker_rank += 1
-                if worker_rank > num_workers:
-                    worker_rank = 1
+                valores = linha.strip().split()  # divide a linha em vários valores
+                for valor in valores:
+                    numero = int(valor)  # converte cada valor individualmente
+                    comm.send(numero, dest=worker_rank)
+                    worker_rank += 1
+                    if worker_rank > num_workers:
+                        worker_rank = 1
         
         # Enviar sinal de término para os workers
         for worker_rank in range(1, size):
@@ -41,7 +44,7 @@ def somador(comm, caminho):
         # Cada trabalhador recebe números e calcula a soma incremental
         soma_local = 0
         while True:
-            numero = comm.recv(source=0)
+            numero = comm.recv(source=0) 
             if numero is None:
                 break
             soma_local += numero
@@ -53,7 +56,7 @@ def main():
     rank = comm.Get_rank()
 
     if rank == 0:
-        caminho = os.path.join(os.getcwd(), 'saida2.txt')
+        caminho = os.path.join(os.getcwd(), 'saida1.txt')
         somador(comm, caminho)
     else:
         somador(comm, None)
