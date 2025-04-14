@@ -82,7 +82,6 @@ for i in lista_num:
 
 print(f'lista de número pares:{num_par}')   
 
-
 # juntando listas
 
 lista_a =  ['a','b','c']
@@ -99,3 +98,25 @@ lista_num2 = [5, 6, 7, 8]
 lista_somada = [a + b for a, b in zip(lista_num1, lista_num2)]
 print(lista_somada)
 
+# lista aninhadas em python
+# craindo uma matriz 3 por 3 como exemplo
+lista_matriz = [
+            [-1,0,1], # index 0 (posição) da linha
+            [1,0,-1], # index 1 (posição) da linha
+            [0,1,-1]  # index 2 (posição) da linha
+        ] 
+print(lista_matriz)
+
+# acesssando uma célula/linha  e coluna da matriz, da lista alinhada com slicing
+                # posição do index da linha da lista, depois o valor da lista 
+print(lista_matriz[1][1]) #retorna 0 
+
+# percorrendo a lista como matriz e exibindo  printando a linha
+for row in lista_matriz:
+    print(row)
+
+# percorrendo a lista, printando cada valor da lista_matriz
+# usando enumerate para contabilizar por index(posição) e iniciar apartir do index 0
+for row_index, valor_linha in enumerate(lista_matriz,0):
+    for valor_index, valor in enumerate(valor_linha,0):
+        print(valor)
