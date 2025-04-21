@@ -3,6 +3,7 @@
 
 # ordem ascendente do maior para o menor
 t = [1,2,3,4]
+a = ['a','b','c','d','e']
 
 def is_sorted(lista: list) -> bool: # retorna um boelano True ou false
     for i in range(len(lista) - 1): # vamos pegar o numero total de elementos e subtrair um, funciona como se fosse (0,3) so que por index    
@@ -14,6 +15,8 @@ t = [1, 2, 3, 4]
 print(is_sorted(t))  # Resultado: True
 
 
-# forma pytonica de resolver
-def is_sorted(lista: list) -> bool:
+# forma pytonica de resolver, vai servir para as duas opções
+def is_sorted_2(lista: list) -> bool:
     return lista == sorted(lista)
+
+print(is_sorted_2(a))
