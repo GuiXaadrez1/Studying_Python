@@ -1,7 +1,39 @@
 import random 
+from tkinter import messagebox
+import subprocess
+import sys
+import os
 
-tables = ['Aces_table','Kings_table','Queen_table']
+def iniciar_programa(caminho_programa):
+    
+    try:
+        subprocess.run([sys.executable, caminho_programa], check=True)
+    except subprocess.CalledProcessError as e:
+        sys.exit(-1)
+                
+def sortear(lista) -> list:
+    
+    print('--------------------')
+    print('| SORTEANDO A MESA |')
+    print('--------------------')
+    
+    for i in random.choice(lista):
+        elemento = random.choice(lista)
+        print(elemento)
+    
+    print(f'{elemento} <-- FOI SORTEADO')         
+    
+    mensagem_alerta = messagebox.showwarning('RESULTADO', f'\nA MESA ATUAL É: {elemento}\n\nProbabilidade de cair a carta no sorteio: 33,33%')        
+    pergunta_reiniciar = messagebox.askyesno('SORTEAR','SORTEAR NOVAMENTE?')
+    
+    if pergunta_reiniciar:
+        iniciar_programa(os.path.join(os.getcwd(),'game_lairs.py'))
+    else:
+        sys.exit(-1)
+                
+    return mensagem_alerta 
 
-sort = random.choice(tables)
-
-print(sort)
+if __name__ == '__main__':
+    
+    tables = ['ACES_TABLE','KINGS_TABLE','QUEEN_TABLE']
+    print(sortear(tables))
