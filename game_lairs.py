@@ -15,10 +15,13 @@ def sortear(lista) -> list:
     
     print('--------------------')
     print('| SORTEANDO A MESA |')
+
     print('--------------------')
     
+    nova_lista = []
     for i in random.choice(lista):
         elemento = random.choice(lista)
+        nova_lista.append(elemento)
         print(elemento)
     
     print(f'{elemento} <-- FOI SORTEADO')         

@@ -20,17 +20,6 @@ def salvar_contagem(contagem, arquivo_saida):
         for palavra, total in contagem.items():
             f.write(f'{palavra} {total}\n')
 
-def salvar_tempo_sequencial(tempo):
-    with open('tempo_sequencial.txt', 'w') as f:
-        f.write(str(tempo))
-
-def carregar_tempo_sequencial():
-    try:
-        with open('tempo_sequencial.txt', 'r') as f:
-            return float(f.read())
-    except FileNotFoundError:
-        return None
-
 if __name__ == '__main__':
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -69,26 +58,13 @@ if __name__ == '__main__':
         fim = time.time()
         tempo_total = fim - inicio
 
+        # Salvar contagem em arquivo
         salvar_contagem(contagem_total, 'contagem_palavras.txt')
 
+        # Mostrar as 10 palavras mais comuns
         mais_comuns = contagem_total.most_common(10)
         print("Top 10 palavras mais comuns:")
         for palavra, total in mais_comuns:
             print(f'{palavra}: {total}')
 
         print(f"\nTempo total: {tempo_total:.4f} segundos")
-
-        if size == 1:
-            # Salvar tempo sequencial como referência
-            salvar_tempo_sequencial(tempo_total)
-            print("Tempo sequencial salvo para comparação futura.")
-        else:
-            # Carregar tempo sequencial para comparação
-            tempo_sequencial = carregar_tempo_sequencial()
-            if tempo_sequencial is not None:
-                speedup = tempo_sequencial / tempo_total
-                eficiencia = speedup / size
-                print(f"Speedup: {speedup:.4f}")
-                print(f"Eficiência: {eficiencia:.4f}")
-            else:
-                print("Tempo sequencial não encontrado. Execute com apenas 1 processo para calcular.")
