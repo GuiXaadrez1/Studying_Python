@@ -1,6 +1,7 @@
 '''
-    Mostrar como funciona a comunicação coletiva do tipo broadcast no MPI, usando mpi4py,
-    onde um processo envia a mesma informação para todos os outros processos.
+    Crie um código que mostre como funciona a comunicação coletiva do tipo broadcast 
+    no MPI, usando mpi4py, onde um processo envia a mesma informação para todos os 
+    outros processos.
 '''
 
 if __name__ == '__main__':
@@ -18,7 +19,7 @@ if __name__ == '__main__':
     else:
         data = None
     # realizando comunicação coletiva usando o brodcast
-    # usandoo um método que faz isso
+    # usando um método que faz isso
     # quem distribui via brodcast essa comunicação é o rank 0
     data = comm.bcast(data,root = 0)
     print(worker,data)
