@@ -6,6 +6,3 @@ from pywinauto.application import Application
 
 # inicializando nossa aplicaco pywinauto "Objeto"
 app:Application = Application.start("notepad.exe") 
-
-
-app.UnitledNotepad.menu_select('Edit->Time/Date')
