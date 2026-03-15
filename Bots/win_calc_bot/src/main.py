@@ -4,6 +4,8 @@
 '''
 
 from pywinauto import Desktop
+from pywinauto.mouse import click
+from pywinauto.keyboard import send_keys
 
 '''
     BIBLIOTECAS NATIVAS
@@ -51,22 +53,23 @@ def isExistPathDoc(path:str=PATH_DOC)->None|bool:
 def plusInCalc(numOne:str,numTwo:str)->None:
 
     try:    
+       
+        dialog.wait("ready")
+        
         # digintando o numero
-        dialog.type_keys(numOne)
-
-        time.sleep(1)
+        dialog.type_keys(numOne,pause=0.1)
         
+        dialog.Mais.wait("ready")
         dialog.Mais.click()
-    
-        time.sleep(1)
         
-        dialog.type_keys(numTwo)
+        dialog.type_keys(numTwo,pause=0.1)
         
+        dialog.Button23.wait("ready")        
         dialog.Button23.click()
+    
     except Exception as err:
         print(f"Aconteceu um erro inesperado: {err}") 
       
-
 '''
     INICINADO LOGICA DO NOSSO CODIGO
 '''
@@ -94,8 +97,10 @@ if isExistPathDoc() == False:
 
 plusInCalc(numOne,numTwo)
 
-time.sleep(5)
-
 # fecha calculadora
+
+dialog.Button3.wait("ready")
+
+# time.sleep(5)
 
 dialog.Button3.click()
