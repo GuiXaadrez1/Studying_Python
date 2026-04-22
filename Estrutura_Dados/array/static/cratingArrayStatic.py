@@ -35,8 +35,12 @@ class StaticArray:
 
     def __init__(self, length: int):
         
-        # Contante que define o tamanho do array
+        # Constante que define o comprimento do array (espaços livres ou não)
         self._LENGTH = length
+        
+        # Atributos padrão da classe que define o tamanho inicial do array
+        # ou seja, espaços preenchidos
+        self._size = 0
         
         # contante que cria o array com base no seu tamanho porem com elementos vazios
         self._arrayElements:np.ndarray = np.array([None] * self._LENGTH)
@@ -52,13 +56,30 @@ class StaticArray:
         """
         return f"Ultimo elemento do array: {self._arrayElements[self._LENGTH - 1]}"
 
-
+    def insertValueElement(self,new_value)->None:
+        
+        if self._size >= self._LENGTH:
+            raise ValueError('O array já está cheio!')
+        else:
+            self._arrayElements[self._size] = new_value
+            self._size += 1
+            
 if __name__ == "__main__":
     
     staticArray = StaticArray(10)
     #print(staticArray.getFirstElement())
     #print(staticArray.getLastElement())
     
+    # staticArray.insertValueElement("hellow")
+    # staticArray.insertValueElement("hellow")
+    # staticArray.insertValueElement("hellow")
+    
+    for i in range(6):
+        staticArray.insertValueElement("hellow")
+      
     # interando sobre os elementos do array statico    
     for i,elemnt in enumerate(staticArray._arrayElements):
-        print(f"índicie:{i} --> valor_elemento_array: {elemnt}")
+        print(f"índicie:{i} --> valor_elemento_array: {elemnt} -- type_value: {type(elemnt)}")
+
+    print("tamanho atual do array com elementos preenchidos:",staticArray._size)
+    print("Espaços vazios atualmente no array:",(staticArray._LENGTH- staticArray._size))
