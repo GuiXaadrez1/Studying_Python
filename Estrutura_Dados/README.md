@@ -1,0 +1,2 @@
+# Introdução 
+O objetivo aqui é entender como funciona a estrutura de dados na essência, fundamento e não a estrutura de dados usadas pela linguagem... O ideal seria usar linguagem C mas com base no livro que estou lendo os exeplos são em python... Então camos aplicar os conceitos de estrutura de dados em python.
