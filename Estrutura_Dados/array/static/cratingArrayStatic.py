@@ -34,13 +34,18 @@ class StaticArray:
             Ultimo elemento do array: None
     """
 
-    def __init__(self, length: int, typecode:str|int|float|bool):
+    def __init__(
+        self, 
+        length: int,
+        typecode:str|int|float|bool|np.ndarray,
+        values:np.ndarray|None=None
+    ):
         
         # Constante que define o comprimento do array (espaços livres ou não)
         self.__LENGTH = length
         
         # Flag que restringe o array a um único tipo de dado.
-        # No conceito mais fundamental, arrays são homogêneos —
+        # No conceito mais fundamental, arrays são homogêneos(aceitam apenas um tipo de dado)
         # todas as posições devem armazenar o mesmo tipo.
         self.__TYPEARRAY = typecode 
          
@@ -51,6 +56,31 @@ class StaticArray:
         # contante que cria o array com base no seu tamanho porem com elementos vazios
         self.__arrayElements:np.ndarray = np.array([None] * self.__LENGTH)
 
+    # Dunder method (magic method) — método especial do Python identificado
+    # pelo duplo underscore antes e depois do nome (__método__).
+    # Não é chamado diretamente — o Python o invoca implicitamente
+    # quando a função nativa len() é aplicada sobre o objeto.
+    #
+    # Retorna apenas os elementos válidos do array através de _size,
+    # ignorando as posições vazias (None) sem precisar percorrer
+    # ou modificar o array — _size já é mantido atualizado por
+    # todos os métodos de inserção e remoção da classe.
+    #
+    # Exemplo:
+    #   capacidade total:  ["a", "b", None, None, None, None, None, None]
+    #   len(staticArray)   → 2  (apenas elementos válidos) ✅
+    #   staticArray._size  → 2  (mesma fonte de verdade)'
+    #
+    # Complexidade:
+    #   O(1) — acesso direto ao atributo _size, sem iteração.
+    def __len__(self):
+        return self._size
+    
+    # O método __str__ permite que você controle exatamente como os dados do seu objeto
+    # são exibidos. Sem ele teriamos a exebição do objeto em memória
+    def __str__(self):
+        return str(self.__arrayElements)
+    
     def getFirstElement(self):
         """Obtendo o primeiro elemento do Array acessando o índice 0"""
         return f"Primeiro elemento: {self.__arrayElements[0]}"
@@ -62,32 +92,210 @@ class StaticArray:
         """
         return f"Ultimo elemento do array: {self.__arrayElements[self.__LENGTH - 1]}"
 
-    def insertValueElement(self,new_value)->None|str:
-        
+    def insertValueElement(self, new_value) -> None:
+        """
+        Insere um novo elemento na próxima posição disponível do array estático.
+
+        Acessa diretamente a primeira posição livre através de _size,
+        insere o valor e incrementa o tamanho lógico. A inserção sempre
+        ocorre no final dos elementos válidos, preservando a ordem de
+        inserção dos demais.
+
+        A homogeneidade do array é garantida pela validação do tipo do
+        valor inserido contra o typecode definido na instanciação —
+        qualquer tipo divergente é rejeitado com TypeError.
+
+        Exemplo:
+            antes:  [1, 2, 3, None, None, None]  _size=3
+            inserir valor 4:
+            depois: [1, 2, 3, 4, None, None]  _size=4
+
+        Complexidade:
+            - Tempo:  O(1) — acesso direto via índice _size.
+            - Espaço: O(1) — nenhuma estrutura auxiliar criada.
+
+        Args:
+            new_value: Valor a ser inserido. Deve ser do mesmo tipo
+            definido pelo typecode na instanciação do array.
+
+        Raises:
+            ValueError: Se o array estiver cheio (_size >= LENGTH),
+            pois arrays estáticos não permitem redimensionamento.
+            TypeError: Se o tipo do valor inserido divergir do typecode
+            definido, violando a homogeneidade do array.
+        """
         if self._size >= self.__LENGTH:
             raise ValueError('This array is full')
+
+        if type(new_value) is type(self.__TYPEARRAY):
+            self.__arrayElements[self._size] = new_value
+            self._size += 1
         else:
+            raise TypeError("Typecode element not equal the typecode Array")
                 
-            if type(new_value) is type(self.__TYPEARRAY):
-                self.__arrayElements[self._size] = new_value
-                self._size += 1
-            else:
-                raise TypeError("Typecode element not equal the typecode Array")
-                
-    def removeElemnt(self)->None:
-        
+    def removeLastElement(self) -> None:
         """
-        Remove um elemento do array estático
-        
+        Remove o último elemento válido do array estático.
+
+        Acessa diretamente a última posição ocupada através de _size-1,
+        substitui o valor por None e decrementa o tamanho lógico.
+        Não há deslocamento de elementos — apenas a última posição
+        é limpa, preservando a ordem de todos os demais.
+
+        Exemplo:
+            antes:  [1, 2, 3, 4, 5, None, None, None]  _size=5
+            depois: [1, 2, 3, 4, None, None, None, None]  _size=4
+
+        Complexidade:
+            - Tempo:  O(1) — acesso direto via índice _size-1.
+            - Espaço: O(1) — nenhuma estrutura auxiliar criada.
+
         Raises:
-            ValueError: _description_
+            ValueError: Se o array estiver vazio (_size == 0),
+            pois não há elemento válido para remover.
         """
         if self._size == 0:
             raise ValueError('O array está vazio!')
-        else:
-            
-            self.__arrayElements[self._size - 1] = None
-            self._size -=1 
+
+        self.__arrayElements[self._size - 1] = None
+        self._size -= 1
+ 
+    def removeElementWithIndex(self, idx: int) -> np.ndarray:
+        """
+        Remove um elemento do array estático pelo seu índice.
+
+        Utiliza a estratégia de substituição(swap) pelo último elemento válido,
+        operando em duas etapas:
+
+            1. O elemento na posição `idx` é sobrescrito pelo último elemento
+            válido do array (posição _size-1), preenchendo o "buraco" gerado
+            pela remoção.
+
+            2. A última posição (_size-1), que agora está duplicada, é limpa
+            com None e o tamanho lógico é decrementado.
+
+        Exemplo:
+            antes:  [1, 2, 3, 4, 5, None, None, None]  _size=5
+            remover idx=1 (valor 2):
+            passo1: [1, 5, 3, 4, 5, None, None, None]  ← último (5) copia para idx=1
+            passo2: [1, 5, 3, 4, None, None, None, None]  _size=4  ← último limpo
+
+        Consequências:
+            - O valor removido é destruído (sobrescrito).
+            - O último elemento válido muda de posição.
+            - A ordem original de inserção não é preservada.
+            - O array retorna desordenado em relação à inserção original.
+
+        Complexidade:
+            - Tempo:  O(1) — nenhum deslocamento de elementos.
+            - Espaço: O(1) — nenhuma estrutura auxiliar criada.
+
+        Args:
+            idx (int): Índice do elemento a ser removido. Deve estar
+            no intervalo válido [0, size-1].
+
+        Returns:
+            np.ndarray: O array atualizado após a remoção, com a última
+            posição válida limpa e _size decrementado.
+
+        Raises:
+            ValueError: Se o array estiver vazio.
+            ValueError: Se o índice estiver fora do intervalo válido [0, size-1].
+        """
+        if self._size == 0:
+            raise ValueError('Tentou deletar em um array vazio.')
+        elif idx < 0 or idx >= self._size:
+            raise ValueError(f'Índice {idx} fora do intervalo válido [0, {self._size - 1}].')
+
+        self.__arrayElements[idx] = self.__arrayElements[self._size - 1]
+        self.__arrayElements[self._size - 1] = None
+        self._size -= 1
+
+        return self.__arrayElements
+     
+    def MaxElementIntoArray(self, array: object) -> tuple:
+        
+        """
+        Localiza o maior elemento dentro de um StaticArray e retorna
+        seu índice e valor.
+
+        Percorre todos os elementos válidos do array comparando cada um
+        com o maior valor encontrado até o momento — estratégia conhecida
+        como Linear Search for Maximum. O índice do maior elemento é
+        atualizado sempre que um valor superior é encontrado.
+
+        Exemplo:
+            array: [3, 7, 1, 9, 2, None, None, None]  _size=5
+            percorre → 3, 7, 1, 9, 2
+            maior encontrado → índice=3, valor=9
+            retorna → (3, 9)
+
+        Complexidade:
+            - Tempo:  O(n) — todos os elementos válidos são visitados.
+            - Espaço: O(1) — nenhuma estrutura auxiliar criada.
+
+        Args:
+            array (StaticArray): Instância de StaticArray sobre a qual
+            a busca pelo maior elemento será realizada.
+
+        Returns:
+            tuple: Par (índice, valor) correspondente ao maior elemento
+            encontrado no array.
+
+        Raises:
+            ValueError:  Se o array estiver vazio.
+            TypeError:   Se o objeto passado não for uma instância de StaticArray.
+        """
+        
+        if not isinstance(array, StaticArray):
+            raise TypeError("O objeto passado não é uma instância de StaticArray!")
+
+        if len(array) == 0:
+            raise ValueError("O array está vazio!")
+
+        max_idx = 0
+
+        for idx, _ in enumerate(array):
+            if array[idx] > array[max_idx]:
+                max_idx = idx
+
+        return max_idx, array[max_idx]
+        
+    def find(self, target) -> np.ndarray | None:
+        """
+        Busca um elemento no array estático pelo seu valor e retorna
+        a primeira ocorrência encontrada.
+
+        Por se tratar de um array desordenado (UnSortedArray), não é possível
+        aplicar estratégias de busca eficientes como a Busca Binária, que
+        exige ordenação prévia. Portanto, utiliza-se a Busca Linear (Linear Search)
+        — cada elemento é visitado sequencialmente do índice 0 até _size-1
+        até que a primeira ocorrência do alvo seja encontrada.
+
+        Exemplo:
+            array: ["a", "b", "c", "d", "e", None, None]  _size=5
+            find("c") → percorre índices 0, 1, 2 → encontra "c" → retorna np.array(["c"])
+            find("z") → percorre todos os índices → não encontra  → retorna None
+
+        Complexidade:
+            - Melhor caso:  O(1) — alvo encontrado no índice 0.
+            - Pior caso:    O(n) — alvo no último índice ou inexistente.
+            - Espaço:       O(1) — nenhuma estrutura auxiliar criada.
+
+        Args:
+            target: Valor a ser localizado no array. Deve ser do mesmo
+            tipo definido pelo typecode na instanciação.
+
+        Returns:
+            np.ndarray com a primeira ocorrência encontrada, ou None caso
+            o alvo não exista entre os elementos válidos do array.
+        """
+        for index in range(self._size):
+
+            if self.__arrayElements[index] == target:
+                return np.array([self.__arrayElements[index]])
+
+        return None
     
     def traverse(self,callback:callable):
         """
@@ -125,11 +333,12 @@ class StaticArray:
                 None
             """
         
-        for index,element in enumerate(staticArray.__arrayElements):
-            
+        for index,element in enumerate(self.__arrayElements):     
             # usando uma função de chamada(retorno)
-            callback(element)      
+            callback(index,element)      
     
+    # Aqui vamos tornar o nosso array estático e desordenado 
+    # em um array estático e ordenado;
     def sortArray(self):
         pass
     
@@ -140,20 +349,22 @@ if __name__ == "__main__":
     # serão inseridos sem critério de ordenação.
     staticArray = StaticArray(10,str())
     
-    # pegando o primeiro e ultimo valor dos elementos do array
+    # pegando o primeiro e ultimo valor dos elementos do array ao iniciar
     print(staticArray.getFirstElement())
     print(staticArray.getLastElement())
-    
-    # inserindo seis valores no array    
-    for i in range(5):
+        
+    for i in range(10):
         staticArray.insertValueElement("hellow")
-        # staticArray.insertValueElement(10)
       
     # removendo tres elementos do array
     for i in range(3):
-        staticArray.removeElemnt()
+        staticArray.removeLastElement()
     
     # iterando sobre o array e printa o valor do elemento
-    staticArray.traverse(print)
+    # staticArray.traverse(print)
     
-    print("Tamanho atual do array com elementos preenchidos:",staticArray._size)
+    staticArray.removeElementWithIndex(5)
+    print(staticArray.find("hellow"))
+    
+    print(staticArray)
+    print(len(staticArray))    
