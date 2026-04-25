@@ -4,57 +4,233 @@ import sys
 class StaticArray:
     
     """
-        Simula o comportamento de um Array Estático usando a biblioteca NumPy.
+    Container de tamanho fixo com suporte a tipagem homogênea e aninhamento.
 
-        Um array estático é uma estrutura de dados linear cujo tamanho é definido
-        no momento da criação e não pode ser alterado posteriormente. Todos os
-        elementos são armazenados em posições de memória contíguas, permitindo
-        acesso direto via índice em tempo constante O(1).
+    Simula o comportamento de um Array Estático inspirado no conceito de vetores
+    unidimensionais homogêneos de linguagens como C — onde o tipo de dado é definido
+    na instanciação e não pode ser alterado. O tamanho é fixo e não permite
+    redimensionamento após a criação.
 
-        Por padrão, ao instanciar o objeto, todas as posições do array são
-        inicializadas com o valor `None`, representando células de memória
-        alocadas porém ainda não preenchidas.
+    Suporta dois modos de operação mutuamente exclusivos:
 
-        Características:
-        
-            - Tamanho fixo definido na instanciação.
-            - Indexação baseada em zero (0 até length - 1).
-            - Acesso a qualquer elemento em tempo O(1).
-            - Não permite redimensionamento após a criação.
+        Modo Primitivo (Fluxo 1):
+            O typecode define um tipo escalar (str, int, float, bool).
+            Os valores injetados via `values` devem ser exclusivamente escalares —
+            containers internos são rejeitados para preservar a homogeneidade.
+            Destinado a vetores unidimensionais de elementos primitivos.
 
-        Args:
-            length (int): Quantidade de posições que o array deve reservar.
+            Exemplo válido:
+                StaticArray(5, str(), ['a', 'b', 'c'])
+                output → ['a', 'b', 'c', None, None]
 
-        Example:
-        
-            >>> sa = StaticArray(5)
-            >>> print(sa.getFirstElement())
-            Primeiro elemento na posicao 0: None
-            >>> print(sa.getLastElement())
-            Ultimo elemento do array: None
+            Exemplo rejeitado:
+                StaticArray(5, str(), [['a', 'b'], 'c'])
+                → TypeError: containers internos não são permitidos no Modo Primitivo.
+
+        Modo Aninhado (Fluxo 2):
+            O typecode define um container (list, np.ndarray, StaticArray).
+            Os valores injetados via `values` devem ser exclusivamente containers —
+            escalares internos são rejeitados para preservar a homogeneidade.
+            Destinado a estruturas multidimensionais de tamanho fixo,
+            onde cada elemento do array é ele mesmo um container,
+            simulando o comportamento de uma matriz estática.
+
+            Exemplo válido:
+                StaticArray(2, list(), [['a', 'b'], ['c', 'd']])
+                output → [['a', 'b'], ['c', 'd']]
+
+            Exemplo rejeitado:
+                StaticArray(2, list(), [['a', 'b'], 'c'])
+                → TypeError: escalares internos não são permitidos no Modo Aninhado.
+
+    Características:
+
+        - Tamanho fixo definido na instanciação.
+        - Tipagem homogênea — aceita apenas um tipo de dado por instância.
+        - Indexação baseada em zero (0 até length - 1).
+        - Acesso a qualquer elemento em tempo O(1).
+        - Não permite redimensionamento após a criação.
+        - Suporta estruturas unidimensionais (Modo Primitivo) e
+        multidimensionais de tamanho fixo (Modo Aninhado).
+        - Iterável via protocolo Python (__iter__, __getitem__).
+
+    Args:
+        length   (int): Quantidade de posições a reservar na memória.
+        typecode (str | int | float | bool | list | np.ndarray | object):
+                Tipo de dado aceito pelo array. Define a homogeneidade
+                e o modo de operação:
+                - Escalar (str, int, float, bool) → Modo Primitivo
+                - Container (list, np.ndarray, StaticArray) → Modo Aninhado
+        values   (list | np.ndarray | StaticArray | None): Valores iniciais
+                opcionais a serem injetados na instanciação.
+                - Modo Primitivo: apenas escalares são permitidos internamente.
+                - Modo Aninhado: apenas containers são permitidos internamente.
+
+    Raises:
+        MemoryError: Se o número de valores em `values` exceder o `length` alocado.
+        TypeError:   Se no Modo Primitivo algum elemento interno for um container,
+                    ou se no Modo Aninhado algum elemento interno for um escalar.
+
+    Example:
+
+        >>> # Modo Primitivo — vetor unidimensional
+        >>> sa = StaticArray(5, str(), ['a', 'b', 'c'])
+        >>> print(sa)
+        ['a' 'b' 'c' None None]
+
+        >>> # Modo Aninhado — matriz estática
+        >>> sa_matriz = StaticArray(2, list(), [['x', 'y'], ['z', 'w']])
+        >>> print(sa_matriz)
+        [list(['x', 'y']) list(['z', 'w'])]
     """
 
     def __init__(
         self, 
         length: int,
-        typecode:str|int|float|bool|np.ndarray,
-        values:np.ndarray|None=None
+        typecode: str|int|float|bool|list|np.ndarray|object,
+        values: object|list|np.ndarray|None=None
     ):
         
-        # Constante que define o comprimento do array (espaços livres ou não)
+        # Constante que representa o comprimento total de espaços alocados
+        # na memória — podendo estar livres (None) ou preenchidos com valores.
         self.__LENGTH = length
         
         # Flag que restringe o array a um único tipo de dado.
-        # No conceito mais fundamental, arrays são homogêneos(aceitam apenas um tipo de dado)
-        # todas as posições devem armazenar o mesmo tipo.
+        # Define tanto a homogeneidade quanto o modo de operação:
+        # tipo escalar → Modo Primitivo | tipo container → Modo Aninhado.
         self.__TYPEARRAY = typecode 
          
-        # Atributos padrão da classe que define o tamanho inicial do array
-        # ou seja, espaços preenchidos
+        # Tamanho lógico do array — quantidade de espaços efetivamente
+        # preenchidos com valores válidos. Sempre <= __LENGTH.
         self._size = 0
         
-        # contante que cria o array com base no seu tamanho porem com elementos vazios
-        self.__arrayElements:np.ndarray = np.array([None] * self.__LENGTH)
+        # Estrutura interna de armazenamento — ndarray NumPy inicializado
+        # com None em todas as posições, representando memória alocada
+        # porém ainda não preenchida.
+        self.__arrayElements: np.ndarray = np.array([None] * self.__LENGTH)
+        
+        if values is not None:
+            
+            # Fluxo 1 — Modo Primitivo (tipos heterogêneos entre values e typecode):
+            # O tipo de 'values' difere do typecode — indica que 'values' é um
+            # container externo cujos elementos internos serão desempacotados e
+            # injetados individualmente no array.
+            #
+            # Restrição: elementos internos devem ser exclusivamente primitivos.
+            # Containers internos violam a homogeneidade do Modo Primitivo e são
+            # rejeitados com TypeError.
+            #
+            # Exemplo válido:
+            #   typecode = str(), values = ['a', 'b', 'c']
+            #   type(list) ≠ type(str) → Fluxo 1
+            #   injeta 'a', 'b', 'c' individualmente → ['a', 'b', 'c', None, None]
+            #
+            # Exemplo rejeitado:
+            #   values = [['a', 'b'], 'c']  → TypeError (lista dentro da lista)
+            if type(values) is not type(self.__TYPEARRAY):
+                
+                # Verifica se algum elemento interno é um container —
+                # se sim, rejeita imediatamente para preservar a homogeneidade.
+                # O any() para na primeira violação encontrada — O(n) pior caso.
+                if any(isinstance(element, (list, np.ndarray, StaticArray)) for element in values):
+                    raise TypeError(
+                        "Elementos internos não podem ser containers no Modo Primitivo. "
+                        "Para aninhamento, defina typecode como list, np.ndarray ou StaticArray."
+                    )
+                
+                match values:
+                    
+                    # values é uma lista Python nativa —
+                    # desempacota e injeta cada elemento escalar
+                    # individualmente nas posições alocadas.
+                    case list():
+                        
+                        if len(values) > self.__LENGTH:
+                            raise MemoryError("Não é possível inserir todos os dados, pouca memória alocada.")
+                        
+                        for valueElement in values:
+                            self.__arrayElements[self._size] = valueElement
+                            self._size += 1
+                    
+                    # values é um ndarray NumPy —
+                    # desempacota e injeta cada elemento preservando
+                    # os valores originais do ndarray.
+                    case np.ndarray():
+                        
+                        if len(values) > self.__LENGTH:
+                            raise MemoryError("Não é possível inserir todos os dados, pouca memória alocada.")
+                        
+                        for valueElement in values:
+                            self.__arrayElements[self._size] = valueElement
+                            self._size += 1
+                    
+                    # values é outro StaticArray —
+                    # desempacota via __iter__ e injeta cada elemento
+                    # individualmente, incluindo os None das posições vazias.
+                    case StaticArray():    
+                        
+                        if len(values) > self.__LENGTH:
+                            raise MemoryError("Não é possível inserir todos os dados, pouca memória alocada.")
+                        
+                        for valueElement in values:
+                            self.__arrayElements[self._size] = valueElement
+                            self._size += 1
+
+            else:
+                
+                # Fluxo 2 — Modo Aninhado (tipos homogêneos entre values e typecode):
+                # O tipo de 'values' é idêntico ao typecode — indica que cada elemento
+                # de 'values' é tratado como um elemento individual do array,
+                # viabilizando estruturas multidimensionais de tamanho fixo.
+                #
+                # A validação de MemoryError é omitida pois o Fluxo 2 pressupõe
+                # que o typecode já garante compatibilidade estrutural entre
+                # o container externo e o array interno.
+                #
+                # Exemplo válido:
+                #   typecode = list(), values = [['a','b'], ['c','d']]
+                #   type(list) == type(list) → Fluxo 2
+                #   injeta ['a','b'] e ['c','d'] como elementos individuais
+                #   output → [['a','b'], ['c','d']]
+                
+                
+                # Verifica se algum elemento interno é um escalar(tipo primitivo) —
+                # se sim, rejeita imediatamente para preservar a homogeneidade.
+                # O any() para na primeira violação encontrada — O(n) pior caso.
+                
+                if any(isinstance(element, (str,int,float,bool)) for element in values):
+                    raise TypeError(
+                        "Elementos internos não podem ser um escalar no Modo Aninhado. "
+                    )
+                
+                match values:
+                    
+                    # values é uma lista cujo typecode também é list —
+                    # cada sublista é um elemento individual do array,
+                    # viabilizando arrays de listas (estrutura bidimensional).
+                    case list():
+                        
+                        for valueElement in values:
+                            self.__arrayElements[self._size] = valueElement
+                            self._size += 1
+                    
+                    # values é um ndarray cujo typecode também é ndarray —
+                    # cada subarray NumPy é um elemento individual do array,
+                    # viabilizando arrays de arrays NumPy.
+                    case np.ndarray():
+                        
+                        for valueElement in values:
+                            self.__arrayElements[self._size] = valueElement
+                            self._size += 1
+                    
+                    # values é um StaticArray cujo typecode também é StaticArray —
+                    # cada elemento do StaticArray externo é um elemento individual,
+                    # viabilizando matrizes compostas por instâncias da própria classe.
+                    case StaticArray():    
+                        
+                        for valueElement in values:
+                            self.__arrayElements[self._size] = valueElement
+                            self._size += 1
 
     # Dunder method (magic method) — método especial do Python identificado
     # pelo duplo underscore antes e depois do nome (__método__).
@@ -69,91 +245,92 @@ class StaticArray:
     # Exemplo:
     #   capacidade total:  ["a", "b", None, None, None, None, None, None]
     #   len(staticArray)   → 2  (apenas elementos válidos) ✅
-    #   staticArray._size  → 2  (mesma fonte de verdade)'
+    #   staticArray._size  → 2  (mesma fonte de verdade)
     #
     # Complexidade:
     #   O(1) — acesso direto ao atributo _size, sem iteração.
     def __len__(self):
         return self._size
     
+    # Dunder method que controla a representação do objeto como string.
+    # Chamado implicitamente pelo Python quando se usa print() ou str().
+    # Sem ele, print(staticArray) exibiria o endereço de memória do objeto.
+    # Retorna o ndarray completo — incluindo as posições vazias (None) —
+    # permitindo visualizar a estrutura real alocada em memória.
+    #
+    # Exemplo:
+    #   print(staticArray) → ["a" "b" None None None None None None]
     def __str__(self):
-        # Dunder method que controla a representação do objeto como string.
-        # Chamado implicitamente pelo Python quando se usa print() ou str().
-        # Sem ele, print(staticArray) exibiria o endereço de memória do objeto.
-        # Retorna o ndarray completo — incluindo as posições vazias (None) —
-        # permitindo visualizar a estrutura real alocada em memória.
-        #
-        # Exemplo:
-        #   print(staticArray) → ["a" "b" None None None None None None]
         return str(self.__arrayElements)
     
+    # Dunder method que torna o objeto iterável.
+    # Chamado implicitamente pelo Python em loops for e
+    # funções como list(), tuple(), etc.
+    # Itera sobre o comprimento total alocado na memória (__LENGTH),
+    # incluindo as posições vazias (None).
+    #
+    # O yield transforma este método em um gerador — ao invés de retornar
+    # todos os valores de uma vez, pausa a execução a cada iteração,
+    # retorna o valor atual e retoma de onde parou na próxima chamada.
+    # Isso evita carregar todos os elementos na memória simultaneamente.
+    #
+    # Exemplo:
+    #   for element in staticArray:
+    #       print(element)  ← percorre todos os slots, incluindo None
     def __iter__(self):
-        # Dunder method que torna o objeto iterável.
-        # Chamado implicitamente pelo Python em loops for e
-        # funções como list(), tuple(), etc.
-        # Itera apenas sobre os elementos válidos (_size),
-        # ignorando as posições vazias (None).
-        #
-        # Exemplo:
-        #   for element in staticArray:
-        #       print(element)  ← percorre só os válidos
-        for index in range(self._size):
-            
+        for index in range(self.__LENGTH):
             yield self.__arrayElements[index]
-            
-            # O yield em Python é usado dentro de uma função para transformá-la
-            # em um gerador.  Ao invés de retornar um único valor e encerrar a função
-            # como o return, o yield pausa a execução da função, retorna um valor e mantém
-            # seu estado (como os valores das variáveis locais).  
-            # Na próxima vez que o gerador for iterado, a função retoma exatamente
-            # de onde parou, logo após o yield.
 
+    # Dunder method que permite acesso por índice via colchetes.
+    # Chamado implicitamente pelo Python quando se usa array[idx].
+    # Respeita o intervalo total alocado [0, LENGTH], incluindo
+    # as posições vazias (None).
+    #
+    # Exemplo:
+    #   staticArray[0]  → primeiro elemento alocado
+    #   staticArray[9]  → décimo elemento alocado (pode ser None)
+    #
+    # Raises:
+    #   IndexError: Se o índice estiver fora do intervalo alocado [0, LENGTH].
     def __getitem__(self, idx: int):
-        # Dunder method que permite acesso por índice via colchetes.
-        # Chamado implicitamente pelo Python quando se usa array[idx].
-        # Respeita o intervalo válido [0, _size-1], ignorando
-        # as posições vazias (None).
-        #
-        # Exemplo:
-        #   staticArray[0]  → primeiro elemento válido
-        #   staticArray[2]  → terceiro elemento válido
-        #
-        # Raises:
-        #   IndexError: Se o índice estiver fora do intervalo válido.
-        if idx < 0 or idx >= self._size:
-            raise IndexError(f'Índice {idx} fora do intervalo válido [0, {self._size - 1}].')
+        if idx < 0 or idx > self.__LENGTH:
+            raise IndexError(f'Índice {idx} fora do intervalo válido [0, {self.__LENGTH}].')
         return self.__arrayElements[idx]
         
-    def getFirstElement(self):
-        # Retorna o primeiro elemento do array acessando diretamente
-        # o índice 0 — operação O(1) por acesso via índice fixo.
-        return f"Primeiro elemento: {self.__arrayElements[0]}"
+    def getFirstElement(self):  
+        # Retorna o primeiro elemento do array alocado na memória
+        # acessando diretamente o índice 0 via __getitem__.
+        # Pode retornar None se nenhum valor foi inserido.
+        # Complexidade: O(1) — acesso via índice fixo.
+        return f"Primeiro elemento: {self[0]}"
 
     def getLastElement(self):
-        # Retorna o último elemento alocado do array acessando
-        # o índice LENGTH-1, respeitando o conceito n-1 da
-        # indexação base zero — operação O(1).
-        # Atenção: retorna a última posição ALOCADA, não o último
-        # elemento válido. Para o último válido, use _size-1.
-        return f"Ultimo elemento do array: {self.__arrayElements[self.__LENGTH - 1]}"
+        # Retorna o último elemento da capacidade alocada do array
+        # acessando o índice LENGTH-1 via __getitem__,
+        # respeitando o conceito de indexação base zero (n-1).
+        #
+        # Atenção: retorna a última posição ALOCADA — não o último
+        # elemento válido. Para o último válido, utilize _size-1.
+        # Complexidade: O(1) — acesso via índice fixo.
+        return f"Ultimo elemento do array: {self[self.__LENGTH - 1]}"
 
     def insertValueElement(self, new_value) -> None:
         """
-        Insere um novo elemento na próxima posição disponível do array estático.
+        Insere um novo elemento na próxima posição disponível do array.
 
         Acessa diretamente a primeira posição livre através de _size,
         insere o valor e incrementa o tamanho lógico. A inserção sempre
         ocorre no final dos elementos válidos, preservando a ordem de
         inserção dos demais.
 
-        A homogeneidade do array é garantida pela validação do tipo do
-        valor inserido contra o typecode definido na instanciação —
-        qualquer tipo divergente é rejeitado com TypeError.
+        A homogeneidade é garantida pela comparação de tipo entre o valor
+        inserido e o typecode definido na instanciação — qualquer tipo
+        divergente é rejeitado com TypeError.
 
         Exemplo:
             antes:  [1, 2, 3, None, None, None]  _size=3
             inserir valor 4:
-            depois: [1, 2, 3, 4, None, None]  _size=4
+            depois: [1, 2, 3, 4, None, None]     _size=4
 
         Complexidade:
             - Tempo:  O(1) — acesso direto via índice _size.
@@ -164,13 +341,13 @@ class StaticArray:
             definido pelo typecode na instanciação do array.
 
         Raises:
-            ValueError: Se o array estiver cheio (_size >= LENGTH),
-            pois arrays estáticos não permitem redimensionamento.
-            TypeError: Se o tipo do valor inserido divergir do typecode
-            definido, violando a homogeneidade do array.
+            MemoryError: Se o array estiver cheio (_size >= LENGTH),
+            pois o container não permite redimensionamento.
+            TypeError: Se o tipo do valor inserido divergir do typecode,
+            violando a homogeneidade do array.
         """
-        if self._size >= self.__LENGTH:
-            raise ValueError('This array is full')
+        if self._size > self.__LENGTH:
+            raise MemoryError('O ARRAY ESTA COM TODOS OS ESPAÇOS ALOCADOS PREENCHIDOS (CHEIO)!')
 
         if type(new_value) is type(self.__TYPEARRAY):
             self.__arrayElements[self._size] = new_value
@@ -180,7 +357,7 @@ class StaticArray:
                 
     def removeLastElement(self) -> None:
         """
-        Remove o último elemento válido do array estático.
+        Remove o último elemento válido do array.
 
         Acessa diretamente a última posição ocupada através de _size-1,
         substitui o valor por None e decrementa o tamanho lógico.
@@ -207,22 +384,22 @@ class StaticArray:
  
     def removeElementWithIndex(self, idx: int) -> np.ndarray:
         """
-        Remove um elemento do array estático pelo seu índice.
+        Remove um elemento do array pelo seu índice.
 
-        Utiliza a estratégia de substituição(swap) pelo último elemento válido,
+        Utiliza a estratégia de substituição (swap) pelo último elemento válido,
         operando em duas etapas:
 
             1. O elemento na posição `idx` é sobrescrito pelo último elemento
-            válido do array (posição _size-1), preenchendo o "buraco" gerado
-            pela remoção.
+               válido do array (posição _size-1), preenchendo o buraco gerado
+               pela remoção.
 
             2. A última posição (_size-1), que agora está duplicada, é limpa
-            com None e o tamanho lógico é decrementado.
+               com None e o tamanho lógico é decrementado.
 
         Exemplo:
             antes:  [1, 2, 3, 4, 5, None, None, None]  _size=5
             remover idx=1 (valor 2):
-            passo1: [1, 5, 3, 4, 5, None, None, None]  ← último (5) copia para idx=1
+            passo1: [1, 5, 3, 4, 5, None, None, None]  ← último (5) copiado para idx=1
             passo2: [1, 5, 3, 4, None, None, None, None]  _size=4  ← último limpo
 
         Consequências:
@@ -249,7 +426,7 @@ class StaticArray:
         """
         if self._size == 0:
             raise ValueError('Tentou deletar em um array vazio.')
-        elif idx < 0 or idx >= self._size:
+        elif idx < 0 or idx > self._size:
             raise ValueError(f'Índice {idx} fora do intervalo válido [0, {self._size - 1}].')
 
         self.__arrayElements[idx] = self.__arrayElements[self._size - 1]
@@ -259,7 +436,6 @@ class StaticArray:
         return self.__arrayElements
      
     def maxElementIntoArray(self, array: object) -> tuple:
-        
         """
         Localiza o maior elemento dentro de um StaticArray e retorna
         seu índice e valor.
@@ -268,6 +444,9 @@ class StaticArray:
         com o maior valor encontrado até o momento — estratégia conhecida
         como Linear Search for Maximum. O índice do maior elemento é
         atualizado sempre que um valor superior é encontrado.
+
+        Aplicável apenas em arrays no Modo Primitivo — em arrays aninhados
+        a comparação entre containers é semanticamente ambígua.
 
         Exemplo:
             array: [3, 7, 1, 9, 2, None, None, None]  _size=5
@@ -288,25 +467,24 @@ class StaticArray:
             encontrado no array.
 
         Raises:
-            ValueError:  Se o array estiver vazio.
-            TypeError:   Se o objeto passado não for uma instância de StaticArray.
+            ValueError: Se o array estiver vazio.
+            TypeError:  Se o objeto passado não for uma instância de StaticArray.
         """
-        
         if not isinstance(array, StaticArray):
             raise TypeError("O objeto passado não é uma instância de StaticArray!")
 
         if len(array) == 0:
             raise ValueError("O array está vazio!")
 
+        
+        
         max_idx = 0
 
         for idx in range(array._size):
-            
-            if array.__arrayElements[idx] > array.__arrayElements[max_idx]:
-                
+            if array[idx] > array[max_idx]:
                 max_idx = idx
 
-        return max_idx, array.__arrayElements[max_idx]
+        return max_idx, array[max_idx]
     
     def minElementIntoArray(self, array: object) -> tuple:
         """
@@ -317,6 +495,9 @@ class StaticArray:
         com o menor valor encontrado até o momento — estratégia conhecida
         como Linear Search for Minimum. O índice do menor elemento é
         atualizado sempre que um valor inferior ou igual é encontrado.
+
+        Aplicável apenas em arrays no Modo Primitivo — em arrays aninhados
+        a comparação entre containers é semanticamente ambígua.
 
         Exemplo:
             array: [3, 7, 1, 9, 2, None, None, None]  _size=5
@@ -342,20 +523,21 @@ class StaticArray:
         """
         if not isinstance(array, StaticArray):
             raise TypeError("O objeto passado não é uma instância de StaticArray!")
+
         if len(array) == 0:
             raise ValueError("O array está vazio!")
 
         min_idx = 0
 
         for idx in range(array._size):
-            if array.__arrayElements[idx] <= array.__arrayElements[min_idx]:
+            if array[idx] <= array[min_idx]:
                 min_idx = idx
 
-        return min_idx, array.__arrayElements[min_idx]
+        return min_idx, array[min_idx]
     
     def find(self, target) -> np.ndarray | None:
         """
-        Busca um elemento no array estático pelo seu valor e retorna
+        Busca um elemento no array pelo seu valor e retorna
         a primeira ocorrência encontrada.
 
         Por se tratar de um array desordenado (UnSortedArray), não é possível
@@ -383,90 +565,96 @@ class StaticArray:
             o alvo não exista entre os elementos válidos do array.
         """
         for index in range(self._size):
-
             if self.__arrayElements[index] == target:
                 return np.array([self.__arrayElements[index]])
 
         return None
     
-    def traverse(self,callback:callable):
+    def traverse(self, callback: callable):
         """
-            Percorre todos os elementos do array aplicando uma função de callback.
+        Percorre todos os elementos do array aplicando uma função de callback.
 
-            A operação de travessia (traversal) é uma das operações fundamentais
-            em estruturas de dados lineares. Ela consiste em visitar sistematicamente
-            cada elemento exatamente uma vez, do índice 0 até n-1, sem modificar
-            a estrutura subjacente.
+        A operação de travessia (traversal) é uma das operações fundamentais
+        em estruturas de dados lineares. Ela consiste em visitar sistematicamente
+        cada elemento exatamente uma vez, do índice 0 até LENGTH-1, sem modificar
+        a estrutura subjacente.
 
-            O parâmetro `callback` segue o padrão de projeto conhecido como
-            higher-order function — uma função que recebe outra função como argumento.
-            Isso permite desacoplar a lógica de iteração da lógica de processamento,
-            tornando o método reutilizável para qualquer operação: impressão,
-            transformação, filtragem, acumulação, etc.
+        Itera sobre o comprimento total alocado (__LENGTH), incluindo as posições
+        vazias (None) — permitindo ao callback inspecionar o estado real do container
+        em memória, não apenas os elementos válidos.
 
-            Complexidade:
-                - Tempo:  O(n) — cada elemento é visitado exatamente uma vez.
-                - Espaço: O(1) — nenhuma estrutura auxiliar é criada.
+        O parâmetro `callback` segue o padrão de projeto conhecido como
+        higher-order function — uma função que recebe outra função como argumento.
+        Isso permite desacoplar a lógica de iteração da lógica de processamento,
+        tornando o método reutilizável para qualquer operação: impressão,
+        transformação, filtragem, acumulação, etc.
 
-            Args:
-                callback (callable): Função aplicada a cada elemento durante
-                a travessia. Deve aceitar um único argumento correspondente
-                ao valor do elemento na posição atual.
+        Complexidade:
+            - Tempo:  O(n) — cada elemento é visitado exatamente uma vez.
+            - Espaço: O(1) — nenhuma estrutura auxiliar é criada.
 
-            Example:
-                >>> sa = StaticArray(5, int())
-                >>> sa.insertValueElement(10)
-                >>> sa.insertValueElement(20)
-                >>> sa.traverse(callback=print)
-                10
-                20
-                None
-                None
-                None
-            """
-        
-        for index,element in enumerate(self.__arrayElements):     
-            # usando uma função de chamada(retorno)
-            callback(index,element)      
+        Args:
+            callback (callable): Função aplicada a cada elemento durante
+            a travessia. Deve aceitar dois argumentos: o índice atual
+            e o valor do elemento na posição correspondente.
+
+        Example:
+            >>> sa = StaticArray(5, int())
+            >>> sa.insertValueElement(10)
+            >>> sa.insertValueElement(20)
+            >>> sa.traverse(callback=print)
+            0 10
+            1 20
+            2 None
+            3 None
+            4 None
+        """
+        for index, element in enumerate(self.__arrayElements):
+            callback(index, element)
     
-    # Aqui vamos tornar o nosso array estático e desordenado 
-    # em um array estático e ordenado;
+    # Aqui vamos tornar o nosso array estático e desordenado
+    # em um array estático e ordenado — implementação futura
+    # de algoritmos como BubbleSort, SelectionSort ou InsertionSort,
+    # que viabilizarão a substituição da Busca Linear O(n)
+    # pela Busca Binária O(log n) no método find().
+    # Aplicável apenas no Modo Primitivo.
     def sortArray(self):
         pass
     
 if __name__ == "__main__":
     
-    # Array homogêneo de strings, alocado e vazio.
+    # Array no Modo Aninhado — typecode e values são ambos list.
+    # Cada sublista é tratada como um elemento individual do container.
     # Classificado como UnSortedArray pois os elementos
     # serão inseridos sem critério de ordenação.
-    staticArray = StaticArray(10,str())
-    
-    # pegando o primeiro e ultimo valor dos elementos do array ao iniciar
+    staticArray = StaticArray(5, list(), [['a','b','c','d'], ['a','b','d']])
+
     print(staticArray.getFirstElement())
     print(staticArray.getLastElement())
-        
-    for i in range(3):
-        staticArray.insertValueElement("hellow")
-        
-    for i in range(2):
-        staticArray.insertValueElement("hello")
     
-    for i in range(5):
-        staticArray.insertValueElement("hell")
+    for i in range(3):
+        staticArray.insertValueElement(['1','2','4'])
       
     # removendo tres elementos do array
     for i in range(2):
         staticArray.removeLastElement()
     
+    #print(staticArray)  
+    
     # iterando sobre o array e printa o valor do elemento
+    staticArray.traverse(print)
+    
+    print(staticArray.removeElementWithIndex(0))
+    
     # staticArray.traverse(print)
     
-    staticArray.removeElementWithIndex(5)
-    print(staticArray.find("hellow"))
+    print(staticArray.find(staticArray[1]))
     
-    print(staticArray)
-    print(len(staticArray))    
+    #print(staticArray)
+    #print(len(staticArray))    
 
+    sys.exit(0)
+    
     counters=StaticArray(50,int())
     
     for i in range(50):
