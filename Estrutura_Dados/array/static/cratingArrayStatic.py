@@ -76,20 +76,65 @@ class StaticArray:
     def __len__(self):
         return self._size
     
-    # O método __str__ permite que você controle exatamente como os dados do seu objeto
-    # são exibidos. Sem ele teriamos a exebição do objeto em memória
     def __str__(self):
+        # Dunder method que controla a representação do objeto como string.
+        # Chamado implicitamente pelo Python quando se usa print() ou str().
+        # Sem ele, print(staticArray) exibiria o endereço de memória do objeto.
+        # Retorna o ndarray completo — incluindo as posições vazias (None) —
+        # permitindo visualizar a estrutura real alocada em memória.
+        #
+        # Exemplo:
+        #   print(staticArray) → ["a" "b" None None None None None None]
         return str(self.__arrayElements)
     
+    def __iter__(self):
+        # Dunder method que torna o objeto iterável.
+        # Chamado implicitamente pelo Python em loops for e
+        # funções como list(), tuple(), etc.
+        # Itera apenas sobre os elementos válidos (_size),
+        # ignorando as posições vazias (None).
+        #
+        # Exemplo:
+        #   for element in staticArray:
+        #       print(element)  ← percorre só os válidos
+        for index in range(self._size):
+            
+            yield self.__arrayElements[index]
+            
+            # O yield em Python é usado dentro de uma função para transformá-la
+            # em um gerador.  Ao invés de retornar um único valor e encerrar a função
+            # como o return, o yield pausa a execução da função, retorna um valor e mantém
+            # seu estado (como os valores das variáveis locais).  
+            # Na próxima vez que o gerador for iterado, a função retoma exatamente
+            # de onde parou, logo após o yield.
+
+    def __getitem__(self, idx: int):
+        # Dunder method que permite acesso por índice via colchetes.
+        # Chamado implicitamente pelo Python quando se usa array[idx].
+        # Respeita o intervalo válido [0, _size-1], ignorando
+        # as posições vazias (None).
+        #
+        # Exemplo:
+        #   staticArray[0]  → primeiro elemento válido
+        #   staticArray[2]  → terceiro elemento válido
+        #
+        # Raises:
+        #   IndexError: Se o índice estiver fora do intervalo válido.
+        if idx < 0 or idx >= self._size:
+            raise IndexError(f'Índice {idx} fora do intervalo válido [0, {self._size - 1}].')
+        return self.__arrayElements[idx]
+        
     def getFirstElement(self):
-        """Obtendo o primeiro elemento do Array acessando o índice 0"""
+        # Retorna o primeiro elemento do array acessando diretamente
+        # o índice 0 — operação O(1) por acesso via índice fixo.
         return f"Primeiro elemento: {self.__arrayElements[0]}"
-    
+
     def getLastElement(self):
-        """
-            Obtendo o último elemento do Array
-            respeitando o conceito: n-1
-        """
+        # Retorna o último elemento alocado do array acessando
+        # o índice LENGTH-1, respeitando o conceito n-1 da
+        # indexação base zero — operação O(1).
+        # Atenção: retorna a última posição ALOCADA, não o último
+        # elemento válido. Para o último válido, use _size-1.
         return f"Ultimo elemento do array: {self.__arrayElements[self.__LENGTH - 1]}"
 
     def insertValueElement(self, new_value) -> None:
@@ -213,7 +258,7 @@ class StaticArray:
 
         return self.__arrayElements
      
-    def MaxElementIntoArray(self, array: object) -> tuple:
+    def maxElementIntoArray(self, array: object) -> tuple:
         
         """
         Localiza o maior elemento dentro de um StaticArray e retorna
@@ -255,12 +300,59 @@ class StaticArray:
 
         max_idx = 0
 
-        for idx, _ in enumerate(array):
-            if array[idx] > array[max_idx]:
+        for idx in range(array._size):
+            
+            if array.__arrayElements[idx] > array.__arrayElements[max_idx]:
+                
                 max_idx = idx
 
-        return max_idx, array[max_idx]
-        
+        return max_idx, array.__arrayElements[max_idx]
+    
+    def minElementIntoArray(self, array: object) -> tuple:
+        """
+        Localiza o menor elemento dentro de um StaticArray e retorna
+        seu índice e valor.
+
+        Percorre todos os elementos válidos do array comparando cada um
+        com o menor valor encontrado até o momento — estratégia conhecida
+        como Linear Search for Minimum. O índice do menor elemento é
+        atualizado sempre que um valor inferior ou igual é encontrado.
+
+        Exemplo:
+            array: [3, 7, 1, 9, 2, None, None, None]  _size=5
+            percorre → 3, 7, 1, 9, 2
+            menor encontrado → índice=2, valor=1
+            retorna → (2, 1)
+
+        Complexidade:
+            - Tempo:  O(n) — todos os elementos válidos são visitados.
+            - Espaço: O(1) — nenhuma estrutura auxiliar criada.
+
+        Args:
+            array (StaticArray): Instância de StaticArray sobre a qual
+            a busca pelo menor elemento será realizada.
+
+        Returns:
+            tuple: Par (índice, valor) correspondente ao menor elemento
+            encontrado no array.
+
+        Raises:
+            ValueError: Se o array estiver vazio.
+            TypeError:  Se o objeto passado não for uma instância de StaticArray.
+        """
+        if not isinstance(array, StaticArray):
+            raise TypeError("O objeto passado não é uma instância de StaticArray!")
+        if len(array) == 0:
+            raise ValueError("O array está vazio!")
+
+        min_idx = 0
+
+        for idx in range(array._size):
+            if array.__arrayElements[idx] <= array.__arrayElements[min_idx]:
+                min_idx = idx
+
+        return min_idx, array.__arrayElements[min_idx]
+    
     def find(self, target) -> np.ndarray | None:
         """
         Busca um elemento no array estático pelo seu valor e retorna
@@ -353,11 +445,17 @@ if __name__ == "__main__":
     print(staticArray.getFirstElement())
     print(staticArray.getLastElement())
         
-    for i in range(10):
+    for i in range(3):
         staticArray.insertValueElement("hellow")
+        
+    for i in range(2):
+        staticArray.insertValueElement("hello")
+    
+    for i in range(5):
+        staticArray.insertValueElement("hell")
       
     # removendo tres elementos do array
-    for i in range(3):
+    for i in range(2):
         staticArray.removeLastElement()
     
     # iterando sobre o array e printa o valor do elemento
@@ -368,3 +466,14 @@ if __name__ == "__main__":
     
     print(staticArray)
     print(len(staticArray))    
+
+    counters=StaticArray(50,int())
+    
+    for i in range(50):
+        
+        if counters._size <= i:
+            
+            counters.insertValueElement(i+1) 
+
+    print(staticArray.maxElementIntoArray(counters))
+    print(staticArray.minElementIntoArray(counters))
