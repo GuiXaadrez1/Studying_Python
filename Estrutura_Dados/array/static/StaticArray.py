@@ -616,18 +616,28 @@ class StaticArray:
     # que viabilizarão a substituição da Busca Linear O(n)
     # pela Busca Binária O(log n) no método find().
     # Aplicável apenas no Modo Primitivo.
-    def sortArray(self):
+    def sortNumericArrayStatic(self):
+        
         if isinstance(self.__arrayElements[0], (int, float)):
+            
+            # variável temporária que armazena a quantidade de elementos dentro do array
             n = len(self.__arrayElements)
+            
             # Loop externo para múltiplas passagens
             for i in range(n):
+                
                 # Loop interno para comparar pares adjacentes
                 for j in range(0, n - i - 1):
+                   
                     if self.__arrayElements[j] > self.__arrayElements[j + 1]:
-                        # Swap correto usando atribuição múltipla
+                        
+                        # Swap correto usando a técnica de atribuição múltipla com tuplas 
                         self.__arrayElements[j], self.__arrayElements[j + 1] = self.__arrayElements[j + 1], self.__arrayElements[j]
+            
             return self.__arrayElements
+        
         else: 
+            
             raise ValueError("Não é permitido ordenação de instâncias de elementos que não sejam inteiros ou floats")
             
     
@@ -678,4 +688,4 @@ if __name__ == "__main__":
     
     counters.insertValueElement(48)
     
-    print(counters.sortArray())
+    print(counters.sortNumericArrayStatic())
