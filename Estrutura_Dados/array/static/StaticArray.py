@@ -476,8 +476,6 @@ class StaticArray:
         if len(array) == 0:
             raise ValueError("O array está vazio!")
 
-        
-        
         max_idx = 0
 
         for idx in range(array._size):
@@ -619,7 +617,19 @@ class StaticArray:
     # pela Busca Binária O(log n) no método find().
     # Aplicável apenas no Modo Primitivo.
     def sortArray(self):
-        pass
+        if isinstance(self.__arrayElements[0], (int, float)):
+            n = len(self.__arrayElements)
+            # Loop externo para múltiplas passagens
+            for i in range(n):
+                # Loop interno para comparar pares adjacentes
+                for j in range(0, n - i - 1):
+                    if self.__arrayElements[j] > self.__arrayElements[j + 1]:
+                        # Swap correto usando atribuição múltipla
+                        self.__arrayElements[j], self.__arrayElements[j + 1] = self.__arrayElements[j + 1], self.__arrayElements[j]
+            return self.__arrayElements
+        else: 
+            raise ValueError("Não é permitido ordenação de instâncias de elementos que não sejam inteiros ou floats")
+            
     
 if __name__ == "__main__":
     
@@ -653,11 +663,11 @@ if __name__ == "__main__":
     #print(staticArray)
     #print(len(staticArray))    
 
-    sys.exit(0)
+    #sys.exit(0)
     
     counters=StaticArray(50,int())
     
-    for i in range(50):
+    for i in range(49):
         
         if counters._size <= i:
             
@@ -665,3 +675,7 @@ if __name__ == "__main__":
 
     print(staticArray.maxElementIntoArray(counters))
     print(staticArray.minElementIntoArray(counters))
+    
+    counters.insertValueElement(48)
+    
+    print(counters.sortArray())
