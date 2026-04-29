@@ -11,6 +11,9 @@ class StaticArray:
     na instanciação e não pode ser alterado. O tamanho é fixo e não permite
     redimensionamento após a criação.
 
+    Lembrando que quando se é estático trabalhamos com vetores 
+    quando se é dinâmico trabalhamos com ponteiros!
+    
     Suporta dois modos de operação mutuamente exclusivos:
 
         Modo Primitivo (Fluxo 1):
@@ -670,10 +673,8 @@ if __name__ == "__main__":
     
     print(staticArray.find(staticArray[1]))
     
-    #print(staticArray)
-    #print(len(staticArray))    
-
-    #sys.exit(0)
+    print(staticArray)
+    print(len(staticArray))    
     
     counters=StaticArray(50,int())
     
