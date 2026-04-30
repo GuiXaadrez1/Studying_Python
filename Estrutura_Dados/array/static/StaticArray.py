@@ -621,26 +621,18 @@ class StaticArray:
     # Aplicável apenas no Modo Primitivo.
     def sortNumericArrayStatic(self):
         
-        if isinstance(self.__arrayElements[0], (int, float)):
+        if isinstance(self[0], (int, float)):
             
-            # variável temporária que armazena a quantidade de elementos dentro do array
-            n = len(self.__arrayElements)
-            
-            # Loop externo para múltiplas passagens
-            for i in range(n):
+            for i in range(self._size):
                 
-                # Loop interno para comparar pares adjacentes
-                for j in range(0, n - i - 1):
-                   
-                    if self.__arrayElements[j] > self.__arrayElements[j + 1]:
+                for j in range(0, self._size - i - 1):
+                    
+                    if self[j] > self[j + 1]:
                         
-                        # Swap correto usando a técnica de atribuição múltipla com tuplas 
-                        self.__arrayElements[j], self.__arrayElements[j + 1] = self.__arrayElements[j + 1], self.__arrayElements[j]
-            
-            return self.__arrayElements
-        
+                        # Swap correto usando a técnica de atribuição múltipla com tuplas  
+                        self.__arrayElements[j], self.__arrayElements[j + 1] = self[j + 1], self[j]
+            return self
         else: 
-            
             raise ValueError("Não é permitido ordenação de instâncias de elementos que não sejam inteiros ou floats")
             
     
