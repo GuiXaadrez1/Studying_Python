@@ -735,6 +735,91 @@ class StaticArray:
                 "Strings e containers não possuem semântica de ordenação numérica."
             )            
     
+    def insertIntoSortArray(self, value: int | float) -> 'StaticArray':
+        """
+        Insere um valor numérico em um StaticArray já ordenado de forma crescente,
+        preservando a ordenação após a inserção via deslocamento (Shift) dos elementos.
+
+        Implementa a estratégia de inserção ordenada por deslocamento — núcleo do
+        algoritmo Insertion Sort. Ao invés de inserir e reordenar, o método localiza
+        a posição correta do novo valor percorrendo os elementos válidos da direita
+        para a esquerda, deslocando cada elemento maior uma posição à direita (Shift)
+        para abrir espaço, e então insere o valor na posição correta.
+
+        Pré-condição:
+            O array deve estar previamente ordenado em ordem crescente.
+            Recomenda-se chamar sortNumericStaticArray() antes da primeira inserção
+            caso o array contenha elementos não ordenados.
+
+        Diferença em relação ao insertValueElement:
+            insertValueElement  → insere no final, sem garantia de ordem — O(1).
+            insertIntoSortArray → insere na posição correta, preserva a ordem — O(n).
+
+        Exemplo:
+            array:  [1, 3, 5, 7, None, None, None, None]  _size=4
+            inserir valor 4:
+
+            passo1: i=3, self[3]=7 > 4 → shift: [1, 3, 5, 7, 7, None, None, None]  i=2
+            passo2: i=2, self[2]=5 > 4 → shift: [1, 3, 5, 5, 7, None, None, None]  i=1
+            passo3: i=1, self[1]=3 < 4 → para o while
+            insere: self[i+1] = self[2] = 4
+
+            depois: [1, 3, 4, 5, 7, None, None, None]  _size=5  ← ordenado ✅
+
+        Complexidade:
+            - Melhor caso:  O(1) — valor inserido é maior que todos (sem deslocamentos).
+            - Caso médio:   O(n) — deslocamento parcial dos elementos válidos.
+            - Pior caso:    O(n) — valor inserido é menor que todos (shift completo).
+            - Espaço:       O(1) — ordenação in-place, sem estrutura auxiliar criada.
+
+        Args:
+            value (int | float): Valor numérico a ser inserido na posição correta
+            do array ordenado. Deve ser int ou float — tipos com semântica de
+            comparação numérica bem definida.
+
+        Returns:
+            StaticArray: Retorna self após a inserção ordenada, permitindo
+            encadeamento de chamadas (method chaining).
+
+        Raises:
+            MemoryError: Se o array estiver cheio (_size >= LENGTH) —
+            a capacidade física é imutável e não permite redimensionamento.
+            ValueError: Se o valor não for int ou float, ou se a instância
+            não for um StaticArray válido — violação de tipagem numérica.
+        """
+
+        # Guarda de capacidade — a alocação física é imutável em arrays estáticos.
+        # Tentar inserir além do __LENGTH violaria o contrato fundamental da estrutura.
+        if self._size >= self.__LENGTH:
+            raise MemoryError(f"Não é possível inserir, alocação de memória já cheia: {self._size}")
+        
+        if isinstance(self, StaticArray) and isinstance(value, (int, float)):
+            
+            # Inicia pelo último elemento válido (índice _size-1) e percorre
+            # para a esquerda enquanto encontrar elementos maiores que o valor.
+            # Cada elemento maior é deslocado uma posição à direita (Shift),
+            # abrindo espaço para o novo valor sem criar estrutura auxiliar.
+            i = self._size - 1
+            
+            while i >= 0 and self.__arrayElements[i] > value:
+                
+                # Shift — move o elemento atual uma posição à direita,
+                # sobrescrevendo a posição i+1 (que já foi deslocada ou é None).
+                self.__arrayElements[i + 1] = self.__arrayElements[i]
+                
+                # Avança o ponteiro para a esquerda — próximo candidato ao shift.
+                i -= 1
+                
+            # Ao sair do while, i+1 é a posição correta para o novo valor:
+            # ou todos os elementos à esquerda são menores, ou chegou ao início.
+            self.__arrayElements[i + 1] = value
+            self._size += 1
+
+            return self
+
+        else:
+            raise ValueError("O valor que você esta inserindo não é do mesmo typecode do Array")
+                                        
 if __name__ == "__main__":
     
     # Array no Modo Aninhado — typecode e values são ambos list.
